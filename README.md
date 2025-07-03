@@ -96,5 +96,4 @@ Este repositório é focado em aprendizado e projetos pessoais. Sinta-se à vont
 
 > “Grandes programadores não são formados apenas por código, mas por curiosidade constante.” – Desconhecido
 
-```
 
