@@ -1,128 +1,120 @@
-let tarefas = [];
-let filtroAtual = 'todas';
-const listaTarefas = document.getElementById('listaTarefas');
-const entradaTarefa = document.getElementById('entradaTarefa');
+let tarefas = []
+let filtroAtual = 'todas'
 
-// Adiciona tarefa
 function adicionarTarefa() {
-  const texto = entradaTarefa.value.trim();
-  if (!texto) return;
+  let entrada = document.getElementById('entradaTarefa')
+  let texto = entrada.value.trim()
 
-  const novaTarefa = {
-    id: Date.now(),
-    texto,
-    concluida: false
-  };
+  if (texto !== '') {
+    let novaTarefa = {
+      id: Date.now(),
+      texto: texto,
+      concluida: false
+    }
 
-  tarefas.push(novaTarefa);
-  entradaTarefa.value = '';
-  atualizarLista();
+    tarefas.push(novaTarefa)
+    entrada.value = ''
+    atualizarLista()
+  }
 }
 
-// Atualiza lista de tarefas
 function atualizarLista() {
-  listaTarefas.innerHTML = '';
+  let lista = document.getElementById('listaTarefas')
+  lista.innerHTML = ''
 
-  const tarefasFiltradas = tarefas.filter(t => {
-    if (filtroAtual === 'pendentes') return !t.concluida;
-    if (filtroAtual === 'concluidas') return t.concluida;
-    return true;
-  });
+  let tarefasFiltradas = tarefas.filter(tarefa => {
+    if (filtroAtual === 'pendentes') return !tarefa.concluida
+    if (filtroAtual === 'concluidas') return tarefa.concluida
+    return true
+  })
 
   tarefasFiltradas.forEach(tarefa => {
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between align-items-center fade-in';
+    let li = document.createElement('li')
+    li.className = 'list-group-item d-flex justify-content-between align-items-center fade-in'
 
-    const span = document.createElement('span');
-    span.textContent = tarefa.texto;
-    if (tarefa.concluida) span.classList.add('concluida');
-
-    span.addEventListener('click', () => toggleConcluida(tarefa.id));
-
-    // Clique duplo para editar
-    span.addEventListener('dblclick', () => editarTarefa(tarefa, span));
-
-    const btnExcluir = document.createElement('button');
-    btnExcluir.className = 'btn btn-sm btn-danger';
-    btnExcluir.textContent = 'Excluir';
-    btnExcluir.onclick = () => excluirTarefa(tarefa.id, li);
-
-    li.appendChild(span);
-    li.appendChild(btnExcluir);
-    listaTarefas.appendChild(li);
-  });
-
-  // Atualiza filtro ativo visualmente
-  document.querySelectorAll('.filtros .btn').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.textContent.toLowerCase().includes(filtroAtual)) {
-      btn.classList.add('active');
+    let span = document.createElement('span')
+    span.textContent = tarefa.texto
+    if (tarefa.concluida) {
+      span.classList.add('concluida')
     }
-  });
+
+    span.onclick = function () {
+      tarefa.concluida = !tarefa.concluida
+      atualizarLista()
+    }
+
+    span.ondblclick = function () {
+      let input = document.createElement('input')
+      input.type = 'text'
+      input.value = tarefa.texto
+      input.className = 'editando'
+
+      input.onblur = function () {
+        tarefa.texto = input.value.trim() || tarefa.texto
+        atualizarLista()
+      }
+
+      input.onkeydown = function (e) {
+        if (e.key === 'Enter') {
+          input.blur()
+        }
+      }
+
+      li.replaceChild(input, span)
+      input.focus()
+    }
+
+    let botaoExcluir = document.createElement('button')
+    botaoExcluir.className = 'btn btn-danger btn-sm'
+    botaoExcluir.textContent = 'Excluir'
+
+    botaoExcluir.onclick = function () {
+      li.classList.add('fade-out')
+      setTimeout(() => {
+        tarefas = tarefas.filter(t => t.id !== tarefa.id)
+        atualizarLista()
+      }, 300)
+    }
+
+    li.appendChild(span)
+    li.appendChild(botaoExcluir)
+    lista.appendChild(li)
+  })
+
+  // Atualizar botão ativo do filtro
+  document.querySelectorAll('.filtros .btn').forEach(botao => {
+    botao.classList.remove('active')
+    if (botao.textContent.toLowerCase().includes(filtroAtual)) {
+      botao.classList.add('active')
+    }
+  })
 }
 
-// Marca ou desmarca como concluída
-function toggleConcluida(id) {
-  const tarefa = tarefas.find(t => t.id === id);
-  if (tarefa) {
-    tarefa.concluida = !tarefa.concluida;
-    atualizarLista();
-  }
-}
-
-// Edita tarefa
-function editarTarefa(tarefa, span) {
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.value = tarefa.texto;
-  input.className = 'editando';
-
-  span.replaceWith(input);
-  input.focus();
-
-  input.addEventListener('blur', () => {
-    tarefa.texto = input.value.trim() || tarefa.texto;
-    atualizarLista();
-  });
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') input.blur();
-  });
-}
-
-// Exclui tarefa com animação
-function excluirTarefa(id, li) {
-  li.classList.add('fade-out');
-  setTimeout(() => {
-    tarefas = tarefas.filter(t => t.id !== id);
-    atualizarLista();
-  }, 300);
-}
-
-// Limpa todas as concluídas
 function limparConcluidas() {
-  tarefas = tarefas.filter(t => !t.concluida);
-  atualizarLista();
+  tarefas = tarefas.filter(t => !t.concluida)
+  atualizarLista()
 }
 
-// Drag and drop com Sortable.js
-new Sortable(listaTarefas, {
+// Ao apertar Enter no input
+document.getElementById('entradaTarefa').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    adicionarTarefa()
+  }
+})
+
+// Drag and drop com Sortable
+new Sortable(document.getElementById('listaTarefas'), {
   animation: 150,
   onEnd: () => {
-    const novaOrdem = [];
-    document.querySelectorAll('#listaTarefas li').forEach(li => {
-      const texto = li.querySelector('span').textContent;
-      const tarefa = tarefas.find(t => t.texto === texto);
-      if (tarefa) novaOrdem.push(tarefa);
-    });
-    tarefas = novaOrdem;
+    let novaLista = []
+    document.querySelectorAll('#listaTarefas li span').forEach(span => {
+      let texto = span.textContent
+      let tarefa = tarefas.find(t => t.texto === texto)
+      if (tarefa) novaLista.push(tarefa)
+    })
+    tarefas = novaLista
   }
-});
-
-// Tecla Enter adiciona tarefa
-entradaTarefa.addEventListener('keydown', e => {
-  if (e.key === 'Enter') adicionarTarefa();
-});
+})
 
 // Inicializa
-atualizarLista();
+atualizarLista()
